@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import sqlite3
 import math
@@ -13,11 +14,11 @@ class LevelSys(commands.Cog):
         print("Leveling is online!")
 
     @commands.Cog.listener()
-    async def on_ready(self, message: discord.Message):
+    async def on_message(self, message: discord.Message):
         if message.author.bot:
             return
         
-        connection = sqlite3.connect("./cogs/levels.db")
+        connection = sqlite3.connect("./cogs/leveling.db")
         cursor = connection.cursor()
         guild_id = message.guild.id
         user_id = message.author.id
@@ -52,31 +53,31 @@ class LevelSys(commands.Cog):
         connection.commit()
         connection.close()
 
-@commands.command()
-async def level(self, ctx: commands.Context, member: discord.Member=None):
+    @app_commands.command(name="level", description="view level of a given user")
+    async def level(self, interaction: discord.Interaction, member: discord.Member=None):
 
-    if member is None:
-        member = ctx.author
+        if member is None:
+            member = interaction.user
 
-    member_id = member.id
-    guild_id = ctx.guild.id
+        member_id = member.id
+        guild_id = interaction.guild.id
 
-    connection = sqlite3.connect("./cogs/levels.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM Users WHERE guild_id = ? AND user_id = ?", (guild_id, member_id))
-    result = cursor.fetchone()
+        connection = sqlite3.connect("./cogs/leveling.db")
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM Users WHERE guild_id = ? AND user_id = ?", (guild_id, member_id))
+        result = cursor.fetchone()
 
-    if result is None:
-        await ctx.send(f"mreowp? {member.name} currently doesn't have a level..")
+        if result is None:
+            await interaction.response.send_message(f"mreowp? {member.name} currently doesn't have a level..")
 
-    else:
-        level = result[2]
-        xp = result[3]
-        level_up_xp = result[4]
+        else:
+            level = result[2]
+            xp = result[3]
+            level_up_xp = result[4]
 
-        await ctx.send(f"mreow~ level statistics for {member.name}: \nlevel: {level} \nxp: {xp} \nxp to level up: {level_up_xp}")
+            await interaction.send_message(f"mreow~ level statistics for {member.name}: \nlevel: {level} \nxp: {xp} \nxp to level up: {level_up_xp}")
 
-    connection.close()
+        connection.close()
 
 
 async def setup(bot):
